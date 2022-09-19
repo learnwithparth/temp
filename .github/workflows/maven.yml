@@ -1,0 +1,31 @@
+name: My Profile
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+jobs:
+
+  deploy:
+    #needs: build
+    name: Pull from Docker and Deploy to AWS EC2
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Pull & Run from Hub
+      uses: appleboy/ssh-action@master
+      with:
+        host: ec2-13-234-115-93.ap-south-1.compute.amazonaws.com
+        username: ec2-user
+        key: ${{secrets.AWS_PRIVATE_KEY}}
+        envs: HITHUB_SHA
+        script: |
+          sudo docker stop sample
+          sudo docker rm sample
+          sudo yum remove docker -y
+          sudo yum install docker -y
+          sudo systemctl start docker
+          sudo systemctl enable docker
+          sudo systemctl restart docker
+          sudo docker pull learnwithparth/sample
+          sudo docker run --detach --name sample -p 80:8080 learnwithparth/sample
